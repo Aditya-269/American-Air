@@ -8,7 +8,7 @@ Usage:
 Performs:
     1. System & Dataset Verification (checks corpus, index, centroids, golden set)
     2. Data Leakage Audit (confirms zero overlap between retrieval index & golden set)
-    3. Automated Test Suite Execution (pytest on all 21 unit & integration tests)
+    3. Automated Test Suite Execution (pytest on all 27 unit & integration tests)
     4. Headline Benchmark Run across Trivial Baseline, Simple Baseline, and AI Agent
     5. Displays Full Breakdown Table (Overall, Natural Held-Out, Adversarial) & Agreement Study
 """

@@ -165,15 +165,24 @@ def call_llm(
     Calls configured LLM with automatic disk caching.
     Falls back gracefully if no API key is provided.
     """
-    cache_key = _get_cache_key(f"{system_instruction}\n\n{prompt}", model)
-    cached = _read_cache(cache_key)
-    if cached is not None:
-        return cached
-
     # Check for available API keys
     groq_key = os.getenv("GROQ_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+
+    if groq_key:
+        effective_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    elif openai_key:
+        effective_model = os.getenv("LLM_MODEL", model)
+    elif anthropic_key:
+        effective_model = "claude-3-5-haiku-latest"
+    else:
+        effective_model = "offline"
+
+    cache_key = _get_cache_key(f"{system_instruction}\n\n{prompt}", effective_model)
+    cached = _read_cache(cache_key)
+    if cached is not None:
+        return cached
 
     if groq_key:
         try:

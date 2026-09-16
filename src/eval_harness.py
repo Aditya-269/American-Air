@@ -385,9 +385,20 @@ def run_benchmark(
         else:
             avg_ground = avg_corr = avg_tone = avg_comp = avg_overall = 0.0
 
+        # Determine actual judge label based on whether LLM responses were successfully obtained
+        llm_success_count = sum(1 for s in applicable_scores if s.get("judge_type") == "llm")
+        if judge_mode == "heuristic":
+            effective_judge_label = "Deterministic Offline Heuristic Rubric"
+        elif llm_success_count == len(applicable_scores) and len(applicable_scores) > 0:
+            effective_judge_label = "LLM-as-a-Judge"
+        elif llm_success_count > 0:
+            effective_judge_label = f"LLM-as-a-Judge ({llm_success_count}/{len(applicable_scores)} successful, rest heuristic)"
+        else:
+            effective_judge_label = "Deterministic Offline Heuristic Rubric (LLM Fallback)"
+
         judge_summary = {
             "judge_mode": judge_mode,
-            "judge_label": "Deterministic Offline Heuristic Rubric" if judge_mode == "heuristic" else "LLM-as-a-Judge",
+            "judge_label": effective_judge_label,
             "n_evaluated_replies": n_autohandled,
             "total_cases": n_total,
             "autohandle_pct": round(n_autohandled / n_total * 100, 1) if n_total > 0 else 0.0,
@@ -479,10 +490,12 @@ def run_benchmark(
         })
     pd.DataFrame(csv_rows).to_csv(out_path / "benchmark_results.csv", index=False)
 
-    judge_desc = "Deterministic Offline Heuristic Rubric" if judge_mode == "heuristic" else "LLM-as-a-Judge"
+    agent_judge_label = clean_export.get("AI Support Agent", {}).get(
+        "judge_quality", {}
+    ).get("judge_label", "Deterministic Offline Heuristic Rubric" if judge_mode == "heuristic" else "LLM-as-a-Judge")
     print("\n" + "=" * 125)
     print(f"                                HEADLINE BENCHMARK COMPARISON TABLE")
-    print(f"  Mode: {mode.upper()} | Judge: {judge_desc} | Evaluated Cases: 200 (176 Natural + 24 Adversarial)")
+    print(f"  Mode: {mode.upper()} | Judge: {agent_judge_label} | Evaluated Cases: 200 (176 Natural + 24 Adversarial)")
     print("=" * 125)
 
     header = (

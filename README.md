@@ -16,13 +16,16 @@ This repository prioritizes **evaluation rigor, zero financial hallucination, an
 | **Architecture Decision Log** | [`reports/decision_log.md`](reports/decision_log.md) | 14 non-obvious engineering decisions detailing context, alternatives considered, chosen path, and rationale. |
 | **Hand-Labelled Golden Eval Set** | [`data/golden_set.jsonl`](data/golden_set.jsonl) | 200 stratified held-out customer messages with ground-truth intent, escalation routing, must-contain fact sketches, and 24 adversarial edge cases. |
 | **Human Audit Agreement Set** | [`data/human_audit_50.jsonl`](data/human_audit_50.jsonl) | 50 audited cases scored blind across 4 rubric dimensions for the Judge-vs-Human agreement study. |
-| **Automated Test Suite** | [`tests/test_pipeline.py`](tests/test_pipeline.py) | 21 unit and integration tests verifying cleaning, intent classification, retrieval, safety rules (variations & near-misses), data leakage absence, baselines, and eval metrics. |
-| **Single-Command Reproduction** | [`scripts/reproduce.py`](scripts/reproduce.py) | End-to-end script verifying dataset prerequisites, data leakage, running the 21 tests, and outputting benchmark results. |
+| **Automated Test Suite** | [`tests/test_pipeline.py`](tests/test_pipeline.py) | 27 unit and integration tests verifying cleaning, intent classification, retrieval, safety rules (variations & near-misses), data leakage absence, Groq OpenAI-compatible integration, offline fallback, baselines, and eval metrics. |
+| **Single-Command Reproduction** | [`scripts/reproduce.py`](scripts/reproduce.py) | End-to-end script verifying dataset prerequisites, data leakage, running the 27 tests, and outputting benchmark results. |
 | **Exploratory Notebook** | [`notebooks/01_explore.ipynb`](notebooks/01_explore.ipynb) | Volume analysis, raw thread inspection, and KMeans clustering silhouette sweeps ($k=6..12$). |
 
 ---
 
 ## 📊 Headline Benchmark Results
+
+> [!NOTE]
+> **Deterministic Offline Benchmark Standard:** The headline benchmark metrics below were generated in **100% deterministic offline mode** (`--mode offline --judge heuristic`). This offline execution uses local SentenceTransformer embeddings (`all-MiniLM-L6-v2`), deterministic nearest centroids, the 8,000-sample offline precedent index, and deterministic safety rules. Zero external API calls are made, ensuring complete mathematical reproducibility across environments without API rate limits or latency. **These offline benchmark numbers are strictly deterministic and must never be described as Groq-generated numbers.**
 
 Evaluated on the **200-sample hand-labelled golden set** (176 natural held-out threads + 24 adversarial edge cases):
 
@@ -127,24 +130,38 @@ python scripts/reproduce.py
 This single deterministic script automatically:
 1. Validates all precomputed datasets and indexes.
 2. Runs the data leakage audit (asserting 0 overlap between corpus and golden set).
-3. Executes the full 21-test automated test suite via pytest.
+3. Executes the full 27-test automated test suite via pytest.
 4. Executes the headline benchmark across all 3 systems and prints the comparison table.
 
 ### Step 3: Explicit Benchmark CLI Modes
-You can run the evaluation harness directly with custom arguments:
-```bash
-# Deterministic offline execution (zero API calls, CPU inference < 15 seconds)
-python src/eval_harness.py --mode offline --judge heuristic
+The pipeline supports two execution modes with distinct judge rubrics:
 
-# Full execution with LLM-as-a-judge (requires OPENAI_API_KEY or GROQ_API_KEY in .env)
+#### 1. Deterministic Offline Mode (Default & Benchmark Standard)
+```bash
+python src/eval_harness.py --mode offline --judge heuristic
+```
+- **Zero API calls:** Executes 100% locally on CPU in <15 seconds with no external network dependencies.
+- **Components:** Local `all-MiniLM-L6-v2` embeddings, nearest-centroid intent classification, cosine-similarity precedent retrieval from 8,000 resolved AA threads, and the Grounded Offline Template Synthesizer.
+- **Judge Rubric:** Explicitly labeled as **`Deterministic Offline Heuristic Rubric`** (scoring Groundedness, Correctness, Tone/Empathy, and Completeness on a 1–5 scale).
+- **Benchmark Alignment:** This mode generates the exact headline 97.0% benchmark reported in the table above and in `reports/results_summary.json`.
+
+#### 2. Full LLM Mode via Groq (OpenAI-Compatible API)
+```bash
 python src/eval_harness.py --mode full --judge llm
 ```
+- **Authentication & Setup:** Requires `GROQ_API_KEY` in `.env` (or environment). Configurable via `GROQ_MODEL` (default: `llama-3.3-70b-versatile`). Uses the official `openai` Python SDK configured with Groq's base URL (`https://api.groq.com/openai/v1`).
+- **Pipeline Integration:**
+  1. **LLM Intent Verification Fallback:** When nearest-centroid confidence is borderline (`confidence < 0.48` or ambiguous margin), queries Groq to disambiguate among the 9 valid taxonomy classes.
+  2. **Customer Reply Generation:** Synthesizes custom, empathetic Twitter drafts (<260 characters) strictly conditioned on retrieved AA historical precedents and brand guidelines.
+  3. **LLM-as-a-Judge:** When `--judge llm` is selected, an LLM judge evaluates customer-facing replies across Groundedness, Correctness, Tone/Empathy, and Completeness via structured JSON output.
+- **Graceful Fallback & Honest Labeling:** If `GROQ_API_KEY` is not provided or if an API call fails, each component gracefully falls back to the deterministic offline implementation without crashing. The judge is labeled as **`LLM-as-a-Judge`** only when actual LLM responses are successfully obtained; otherwise, it is labeled as **`Deterministic Offline Heuristic Rubric (LLM Fallback)`**.
+
 
 ### Step 4: Run Test Suite Separately
 ```bash
 pytest -v tests/test_pipeline.py
 ```
-Executes 21 unit and integration tests verifying:
+Executes 27 unit and integration tests verifying:
 - Text cleaning, regex stripping, and boilerplate detection
 - 9-class intent classification and centroid confidence
 - Historical precedent retrieval and cosine similarity
@@ -152,6 +169,9 @@ Executes 21 unit and integration tests verifying:
 - Near-miss tests (verifying benign mentions do not false-trigger escalation)
 - Data leakage audit (asserting 0 thread ID, message string, or seed exemplar overlap)
 - Honest reply quality scoring (asserting no fake 5/5 scores on escalated cases)
+- Groq OpenAI-compatible integration (`call_llm` routing to Groq endpoint with `llama-3.3-70b-versatile`)
+- Intent fallback verification and grounded draft reply generation in `mode='full'`
+- LLM-as-a-judge JSON parsing and offline graceful fallback behavior
 
 ---
 

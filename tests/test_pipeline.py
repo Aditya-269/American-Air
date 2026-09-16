@@ -295,3 +295,141 @@ def test_evaluation_metrics():
     assert esc_metrics["false_negatives_costly_autohandles"] == 1
     assert esc_metrics["false_positives_unnecessary_escalates"] == 0
     assert esc_metrics["false_autohandle_rate"] == 0.50
+
+
+# ---------------------------------------------------------------------------
+# GROQ INTEGRATION & FALLBACK VERIFICATION TESTS
+# ---------------------------------------------------------------------------
+from unittest.mock import patch, MagicMock
+from src.agent import call_llm
+
+
+def test_groq_openai_compatible_call_llm(monkeypatch):
+    """Verifies that call_llm routes through OpenAI client configured for Groq endpoint."""
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test_mock_key_123")
+    monkeypatch.setenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    mock_client = MagicMock()
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock(message=MagicMock(content="flight_delay_cancellation"))]
+    mock_client.chat.completions.create.return_value = mock_resp
+
+    with patch("src.agent._read_cache", return_value=None), \
+         patch("src.agent._write_cache") as mock_write, \
+         patch("openai.OpenAI", return_value=mock_client) as mock_openai_cls:
+        res = call_llm("test unique user prompt", "test system instruction")
+        assert res == "flight_delay_cancellation"
+        mock_openai_cls.assert_called_once_with(
+            api_key="gsk_test_mock_key_123",
+            base_url="https://api.groq.com/openai/v1"
+        )
+        mock_client.chat.completions.create.assert_called_once()
+        args, kwargs = mock_client.chat.completions.create.call_args
+        assert kwargs["model"] == "llama-3.3-70b-versatile"
+
+
+def test_agent_full_mode_llm_intent_fallback():
+    """Verifies Groq/LLM intent verification is invoked in mode='full' when centroid confidence is borderline."""
+    agent = AmericanAirAgent(mode="full")
+    # Force classifier to return needs_fallback=True
+    with patch.object(agent.classifier, "classify", return_value={
+        "intent": "other_unclear",
+        "confidence": 0.42,
+        "needs_fallback": True,
+        "all_scores": {}
+    }):
+        with patch("src.agent.call_llm", return_value="flight_delay_cancellation") as mock_llm:
+            res = agent.classify_intent("My flight was held on tarmac for 4 hours")
+            assert mock_llm.called
+            assert res["intent"] == "flight_delay_cancellation"
+            assert res["llm_verified"] is True
+            assert res["confidence"] >= 0.75
+
+
+def test_agent_full_mode_llm_draft_reply():
+    """Verifies customer-facing reply drafting calls LLM in mode='full'."""
+    agent = AmericanAirAgent(mode="full")
+    precedents = [{"aa_reply": "Please DM your 6-letter record locator so we can help.", "is_boilerplate": False}]
+    with patch("src.agent.call_llm", return_value="We are so sorry for the delay. Please DM your record locator.") as mock_llm:
+        reply = agent.draft_reply("Flight AA 101 delayed", "flight_delay_cancellation", precedents)
+        assert mock_llm.called
+        assert "We are so sorry" in reply
+
+
+def test_llm_judge_quality_scoring():
+    """Verifies judge_reply_quality calls LLM and parses structured JSON audit output."""
+    mock_audit_json = json.dumps({
+        "groundedness": 5,
+        "correctness": 5,
+        "tone_empathy": 4,
+        "completeness": 5,
+        "justification": "Accurate response grounded in precedent."
+    })
+    with patch("src.eval_harness.call_llm", return_value=mock_audit_json) as mock_llm:
+        eval_res = judge_reply_quality(
+            customer_message="Where is my bag?",
+            draft_reply="We are sorry. Please DM your bag tag so we can assist.",
+            decision="auto_handle",
+            grounding_precedents=["Please DM your bag tag."],
+            judge_mode="llm"
+        )
+        assert mock_llm.called
+        assert eval_res["is_applicable"] is True
+        assert eval_res["judge_type"] == "llm"
+        assert eval_res["groundedness"] == 5.0
+        assert eval_res["correctness"] == 5.0
+        assert eval_res["overall"] == 4.75
+
+
+def test_offline_mode_zero_llm_calls():
+    """Verifies that in mode='offline' and judge='heuristic', zero calls are made to call_llm."""
+    agent = AmericanAirAgent(mode="offline")
+    with patch("src.agent.call_llm") as mock_agent_llm:
+        res = agent.process("Where is flight 305?")
+        assert not mock_agent_llm.called
+
+    with patch("src.eval_harness.call_llm") as mock_judge_llm:
+        j_res = judge_reply_quality(
+            customer_message="Where is flight 305?",
+            draft_reply="Please DM your confirmation code.",
+            decision="auto_handle",
+            judge_mode="heuristic"
+        )
+        assert not mock_judge_llm.called
+        assert j_res["judge_type"] == "heuristic"
+
+
+def test_graceful_fallback_when_llm_fails():
+    """Verifies pipeline never crashes if LLM returns empty/fails."""
+    agent = AmericanAirAgent(mode="full")
+    # Intent fallback fails -> returns empty
+    with patch.object(agent.classifier, "classify", return_value={
+        "intent": "other_unclear",
+        "confidence": 0.40,
+        "needs_fallback": True,
+        "all_scores": {}
+    }):
+        with patch("src.agent.call_llm", return_value=""):
+            res = agent.classify_intent("Ambiguous customer message")
+            assert res["intent"] == "other_unclear"  # preserved centroid
+
+    # Reply drafting fails -> falls back to Grounded Offline Template Synthesizer
+    with patch("src.agent.call_llm", return_value=""):
+        draft = agent.draft_reply("Lost bag", "baggage_issue", [])
+        assert len(draft) > 10
+        assert "luggage" in draft.lower() or "bag" in draft.lower()
+
+    # Judge fails -> falls back to deterministic heuristic rubric
+    with patch("src.eval_harness.call_llm", return_value=""):
+        j_res = judge_reply_quality(
+            customer_message="Lost bag",
+            draft_reply="We are sorry for the luggage issue. Please DM your bag tag.",
+            decision="auto_handle",
+            judge_mode="llm"
+        )
+        assert j_res["is_applicable"] is True
+        assert j_res["judge_type"] == "heuristic"
+        assert j_res["overall"] > 0
+
