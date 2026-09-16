@@ -12,6 +12,7 @@ venv/
 data/raw/
 *.csv.gz
 *.zip
+*.rar
 
 # Cache
 .cache/

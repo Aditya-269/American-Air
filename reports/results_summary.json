@@ -1,14 +1,31 @@
 {
   "Trivial Baseline": {
-    "intent_accuracy": 0.105,
-    "intent_macro_f1": 0.0211,
-    "escalation_precision": 0.0,
-    "escalation_recall": 0.0,
-    "costly_false_autohandles": 36,
-    "false_autohandle_rate": 1.0,
-    "unnecessary_false_escalates": 0,
-    "false_escalate_rate": 0.0,
+    "intent_accuracy": {
+      "overall": 0.105,
+      "natural_heldout": 0.108,
+      "adversarial": 0.0833
+    },
+    "intent_macro_f1": {
+      "overall": 0.0211,
+      "natural_heldout": 0.0217,
+      "adversarial": 0.0171
+    },
+    "escalation": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "true_positives": 0,
+      "true_negatives": 164,
+      "false_positives_unnecessary_escalates": 0,
+      "false_negatives_costly_autohandles": 36,
+      "false_autohandle_rate": 1.0,
+      "false_escalate_rate": 0.0
+    },
     "judge_quality": {
+      "judge_mode": "heuristic",
+      "judge_label": "Deterministic Offline Heuristic Rubric",
+      "n_evaluated_replies": 200,
+      "total_cases": 200,
+      "autohandle_pct": 100.0,
       "avg_groundedness": 2.5,
       "avg_correctness": 3.0,
       "avg_tone_empathy": 3.0,
@@ -17,37 +34,71 @@
     }
   },
   "Simple Baseline": {
-    "intent_accuracy": 0.415,
-    "intent_macro_f1": 0.4259,
-    "escalation_precision": 0.875,
-    "escalation_recall": 0.1944,
-    "costly_false_autohandles": 29,
-    "false_autohandle_rate": 0.8056,
-    "unnecessary_false_escalates": 1,
-    "false_escalate_rate": 0.0061,
+    "intent_accuracy": {
+      "overall": 0.415,
+      "natural_heldout": 0.3864,
+      "adversarial": 0.625
+    },
+    "intent_macro_f1": {
+      "overall": 0.4259,
+      "natural_heldout": 0.3925,
+      "adversarial": 0.6131
+    },
+    "escalation": {
+      "precision": 0.875,
+      "recall": 0.1944,
+      "true_positives": 7,
+      "true_negatives": 163,
+      "false_positives_unnecessary_escalates": 1,
+      "false_negatives_costly_autohandles": 29,
+      "false_autohandle_rate": 0.8056,
+      "false_escalate_rate": 0.0061
+    },
     "judge_quality": {
-      "avg_groundedness": 3.21,
-      "avg_correctness": 3.49,
-      "avg_tone_empathy": 3.57,
-      "avg_completeness": 3.19,
-      "avg_overall_quality": 3.37
+      "judge_mode": "heuristic",
+      "judge_label": "Deterministic Offline Heuristic Rubric",
+      "n_evaluated_replies": 192,
+      "total_cases": 200,
+      "autohandle_pct": 96.0,
+      "avg_groundedness": 3.14,
+      "avg_correctness": 3.43,
+      "avg_tone_empathy": 3.53,
+      "avg_completeness": 3.14,
+      "avg_overall_quality": 3.31
     }
   },
   "AI Support Agent": {
-    "intent_accuracy": 0.97,
-    "intent_macro_f1": 0.9712,
-    "escalation_precision": 0.2427,
-    "escalation_recall": 0.6944,
-    "costly_false_autohandles": 11,
-    "false_autohandle_rate": 0.3056,
-    "unnecessary_false_escalates": 78,
-    "false_escalate_rate": 0.4756,
+    "intent_accuracy": {
+      "overall": 0.97,
+      "natural_heldout": 1.0,
+      "adversarial": 0.75
+    },
+    "intent_macro_f1": {
+      "overall": 0.9712,
+      "natural_heldout": 1.0,
+      "adversarial": 0.7771
+    },
+    "escalation": {
+      "precision": 0.2571,
+      "recall": 0.75,
+      "true_positives": 27,
+      "true_negatives": 86,
+      "false_positives_unnecessary_escalates": 78,
+      "false_negatives_costly_autohandles": 9,
+      "false_autohandle_rate": 0.25,
+      "false_escalate_rate": 0.4756
+    },
     "judge_quality": {
-      "avg_groundedness": 4.51,
-      "avg_correctness": 4.55,
-      "avg_tone_empathy": 4.34,
-      "avg_completeness": 4.3,
-      "avg_overall_quality": 4.43
+      "judge_mode": "heuristic",
+      "judge_label": "Deterministic Offline Heuristic Rubric",
+      "n_evaluated_replies": 95,
+      "total_cases": 200,
+      "autohandle_pct": 47.5,
+      "avg_groundedness": 4.0,
+      "avg_correctness": 4.08,
+      "avg_tone_empathy": 4.16,
+      "avg_completeness": 4.08,
+      "avg_overall_quality": 4.08
     }
   }
 }

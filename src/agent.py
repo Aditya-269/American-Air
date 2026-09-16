@@ -33,6 +33,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 logger = logging.getLogger("agent")
 
 # Cache directory for LLM calls
@@ -63,18 +65,20 @@ HARD_RULES = [
         "code": "hard_rule_safety_medical",
         "pattern": re.compile(
             r"\b(medical\s+emergency|heart\s+attack|stroke|paramedic|ambulance|passed\s+out|unconscious|"
-            r"bomb|weapon|gun|hijack|terrorist|assault|police\s+involved|physical\s+violence)\b",
+            r"bomb|weapon|gun|hijack|terrorist|assault\w*|police\s+involved|physical\s+violence|"
+            r"injured\b|injury|spilled\s+hot|burned\s+by|scalded|intentionally\s+hurt)\b",
             re.IGNORECASE
         ),
-        "description": "Immediate safety, medical emergency, security, or criminal allegation"
+        "description": "Immediate safety, medical emergency, security, or physical injury allegation"
     },
     {
         "code": "hard_rule_unaccompanied_minor",
         "pattern": re.compile(
-            r"\b(unaccompanied\s+minor|minor\s+traveling\s+alone|child\s+alone|umnr|child\s+stranded)\b",
+            r"\b(unaccompanied\s+minor|umnr)\b|"
+            r"\b(child|minor|kid|daughter|son|[0-9]{1,2}\s*[- ]?year\s*[- ]?old)\b.{0,30}\b(traveling\s+alone|flying\s+alone|alone|by\s+(himself|herself|themselves)|without\s+(me|parent|adult|chaperone)|stranded)\b",
             re.IGNORECASE
         ),
-        "description": "Unaccompanied minor or child stranded alone"
+        "description": "Unaccompanied minor or child stranded/traveling alone"
     },
     {
         "code": "hard_rule_abusive_threat",
@@ -91,6 +95,14 @@ HARD_RULES = [
             re.IGNORECASE
         ),
         "description": "Explicit dollar amount demanded or promised"
+    },
+    {
+        "code": "hard_rule_adversarial_prompt_injection",
+        "pattern": re.compile(
+            r"\b(ignore\s+(all\s+)?previous\s+instructions|disregard\s+(all\s+)?prior\s+instructions|system\s+prompt\s+override|developer\s+mode)\b",
+            re.IGNORECASE
+        ),
+        "description": "Adversarial prompt injection attempt detected"
     }
 ]
 
@@ -233,10 +245,12 @@ class AmericanAirAgent:
         classifier: Optional[IntentClassifier] = None,
         retriever: Optional[RetrievalIndex] = None,
         retrieval_sim_threshold: float = 0.50,
-        intent_conf_threshold: float = 0.48
+        intent_conf_threshold: float = 0.48,
+        mode: str = "full"
     ):
+        self.mode = mode
         self.classifier = classifier or IntentClassifier()
-        self.retriever = retriever or RetrievalIndex()
+        self.retriever = retriever or RetrievalIndex(model=self.classifier.model)
         self.retrieval_sim_threshold = retrieval_sim_threshold
         self.intent_conf_threshold = intent_conf_threshold
 
@@ -247,8 +261,8 @@ class AmericanAirAgent:
         """
         res = self.classifier.classify(text, confidence_threshold=self.intent_conf_threshold)
 
-        # LLM fallback if confidence is low or margin is ambiguous
-        if res.get("needs_fallback"):
+        # LLM fallback if confidence is low or margin is ambiguous (only in full mode)
+        if res.get("needs_fallback") and self.mode != "offline":
             system_prompt = (
                 "You are an expert customer intent classifier for American Airlines (@AmericanAir).\n"
                 "Classify the customer's opening message into EXACTLY ONE of the following classes:\n"
@@ -297,11 +311,12 @@ class AmericanAirAgent:
             "Draft Reply:"
         )
 
-        draft = call_llm(user_prompt, system_instruction, temperature=0.2)
-        if draft:
-            # Clean quotes if wrapped
-            draft = draft.strip().strip('"')
-            return draft
+        if self.mode != "offline":
+            draft = call_llm(user_prompt, system_instruction, temperature=0.2)
+            if draft:
+                # Clean quotes if wrapped
+                draft = draft.strip().strip('"')
+                return draft
 
         # Grounded Offline Template Synthesizer
         # Uses the best non-boilerplate precedent or template tailored to intent

@@ -1,37 +1,37 @@
 {
   "groundedness": {
-    "cohen_kappa_quadratic": 0.16,
-    "exact_match_pct": 58.0,
+    "cohen_kappa_quadratic": 0.0,
+    "exact_match_pct": 86.96,
     "within_plus_minus_one_pct": 100.0,
-    "pearson_correlation": 0.1782,
-    "sample_size": 50
+    "pearson_correlation": 0.0,
+    "sample_size": 23
   },
   "correctness": {
-    "cohen_kappa_quadratic": 0.04,
-    "exact_match_pct": 52.0,
+    "cohen_kappa_quadratic": 0.0,
+    "exact_match_pct": 69.57,
     "within_plus_minus_one_pct": 100.0,
-    "pearson_correlation": 0.0412,
-    "sample_size": 50
+    "pearson_correlation": 0.0,
+    "sample_size": 23
   },
   "tone_empathy": {
     "cohen_kappa_quadratic": 0.0,
-    "exact_match_pct": 82.0,
+    "exact_match_pct": 86.96,
     "within_plus_minus_one_pct": 100.0,
     "pearson_correlation": 0.0,
-    "sample_size": 50
+    "sample_size": 23
   },
   "completeness": {
     "cohen_kappa_quadratic": 0.0,
-    "exact_match_pct": 76.0,
+    "exact_match_pct": 91.3,
     "within_plus_minus_one_pct": 100.0,
     "pearson_correlation": 0.0,
-    "sample_size": 50
+    "sample_size": 23
   },
   "overall": {
-    "cohen_kappa_quadratic": 0.16,
-    "exact_match_pct": 58.0,
+    "cohen_kappa_quadratic": 0.0,
+    "exact_match_pct": 91.3,
     "within_plus_minus_one_pct": 100.0,
-    "pearson_correlation": 0.1873,
-    "sample_size": 50
+    "pearson_correlation": 0.0,
+    "sample_size": 23
   }
 }

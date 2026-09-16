@@ -21,6 +21,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 logger = logging.getLogger("intents")
 
 # 9-class fixed taxonomy derived from AA tweet clusters

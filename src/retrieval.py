@@ -27,6 +27,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
 logger = logging.getLogger("retrieval")
 
 
@@ -39,12 +42,13 @@ class RetrievalIndex:
         self,
         model_name: str = "all-MiniLM-L6-v2",
         index_path: str = "data/processed/retrieval_index.npz",
-        corpus_path: str = "data/processed/retrieval_corpus.parquet"
+        corpus_path: str = "data/processed/retrieval_corpus.parquet",
+        model: Optional[SentenceTransformer] = None
     ):
         self.model_name = model_name
         self.index_path = Path(index_path)
         self.corpus_path = Path(corpus_path)
-        self.model = SentenceTransformer(model_name)
+        self.model = model if model is not None else SentenceTransformer(model_name)
         
         self.corpus_df: Optional[pd.DataFrame] = None
         self.embeddings: Optional[np.ndarray] = None

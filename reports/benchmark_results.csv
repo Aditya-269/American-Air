@@ -1,0 +1,4 @@
+System,Intent_Acc_Overall,Intent_Acc_Natural,Intent_Acc_Adversarial,Intent_MacroF1_Overall,Escalation_Precision,Escalation_Recall,Costly_False_AutoHandles,Costly_False_AutoHandle_Rate,Unnecessary_False_Escalates,Unnecessary_False_Escalate_Rate,AutoHandled_Replies_Evaluated,Avg_Groundedness,Avg_Correctness,Avg_Tone_Empathy,Avg_Completeness,Avg_Overall_Quality
+Trivial Baseline,0.105,0.108,0.0833,0.0211,0.0,0.0,36,1.0,0,0.0,200/200,2.5,3.0,3.0,2.5,2.75
+Simple Baseline,0.415,0.3864,0.625,0.4259,0.875,0.1944,29,0.8056,1,0.0061,192/200,3.14,3.43,3.53,3.14,3.31
+AI Support Agent,0.97,1.0,0.75,0.9712,0.2571,0.75,9,0.25,78,0.4756,95/200,4.0,4.08,4.16,4.08,4.08
