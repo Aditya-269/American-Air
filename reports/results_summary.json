@@ -1,0 +1,53 @@
+{
+  "Trivial Baseline": {
+    "intent_accuracy": 0.105,
+    "intent_macro_f1": 0.0211,
+    "escalation_precision": 0.0,
+    "escalation_recall": 0.0,
+    "costly_false_autohandles": 36,
+    "false_autohandle_rate": 1.0,
+    "unnecessary_false_escalates": 0,
+    "false_escalate_rate": 0.0,
+    "judge_quality": {
+      "avg_groundedness": 2.5,
+      "avg_correctness": 3.0,
+      "avg_tone_empathy": 3.0,
+      "avg_completeness": 2.5,
+      "avg_overall_quality": 2.75
+    }
+  },
+  "Simple Baseline": {
+    "intent_accuracy": 0.415,
+    "intent_macro_f1": 0.4259,
+    "escalation_precision": 0.875,
+    "escalation_recall": 0.1944,
+    "costly_false_autohandles": 29,
+    "false_autohandle_rate": 0.8056,
+    "unnecessary_false_escalates": 1,
+    "false_escalate_rate": 0.0061,
+    "judge_quality": {
+      "avg_groundedness": 3.21,
+      "avg_correctness": 3.49,
+      "avg_tone_empathy": 3.57,
+      "avg_completeness": 3.19,
+      "avg_overall_quality": 3.37
+    }
+  },
+  "AI Support Agent": {
+    "intent_accuracy": 0.97,
+    "intent_macro_f1": 0.9712,
+    "escalation_precision": 0.2427,
+    "escalation_recall": 0.6944,
+    "costly_false_autohandles": 11,
+    "false_autohandle_rate": 0.3056,
+    "unnecessary_false_escalates": 78,
+    "false_escalate_rate": 0.4756,
+    "judge_quality": {
+      "avg_groundedness": 4.51,
+      "avg_correctness": 4.55,
+      "avg_tone_empathy": 4.34,
+      "avg_completeness": 4.3,
+      "avg_overall_quality": 4.43
+    }
+  }
+}

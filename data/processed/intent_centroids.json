@@ -1,0 +1,25 @@
+{
+  "taxonomy": [
+    "flight_delay_cancellation",
+    "baggage_issue",
+    "rebooking_change_request",
+    "refund_compensation_request",
+    "aadvantage_miles_issue",
+    "checkin_boarding_issue",
+    "general_complaint_service_quality",
+    "booking_payment_issue",
+    "other_unclear"
+  ],
+  "descriptions": {
+    "flight_delay_cancellation": "Inquiries or complaints regarding flight delays, cancellations, tarmac delays, missed connections, or schedule changes.",
+    "baggage_issue": "Lost, delayed, damaged, or mishandled checked luggage, baggage fees, or carousel retrieval issues.",
+    "rebooking_change_request": "Requests to change flight times/dates, switch to alternate flights, standby status, or seat rebooking.",
+    "refund_compensation_request": "Requests for monetary refunds, travel vouchers, hotel/meal reimbursement, or compensation for disrupted travel.",
+    "aadvantage_miles_issue": "AAdvantage frequent flyer program, missing miles/points, status tiers, award booking redemptions, or account login.",
+    "checkin_boarding_issue": "Online/app check-in problems, boarding pass issues, priority boarding groups, gate agent seating conflicts, or seat assignments.",
+    "general_complaint_service_quality": "Complaints regarding inflight service, flight attendant/agent rudeness, dirty aircraft, broken seats, or poor experience.",
+    "booking_payment_issue": "Problems making a reservation, duplicate credit card charges, checkout payment errors, or fare discrepancy on aa.com.",
+    "other_unclear": "Vague greetings, compliments/shoutouts, general aviation chatter, non-English tweets, or inquiries not fitting the above classes."
+  },
+  "model_name": "all-MiniLM-L6-v2"
+}
