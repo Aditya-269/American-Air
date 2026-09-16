@@ -109,8 +109,8 @@ Derived bottom-up via KMeans clustering silhouette sweeps ($k=6..12$) on custome
 ### Step 1: Environment Setup
 ```bash
 # Clone the repository
-git clone https://github.com/Aditya-269/Hiver.git
-cd Hiver
+git clone https://github.com/Aditya-269/American-Air.git
+cd American-Air
 
 # Create and activate virtual environment (Python 3.10+)
 python3 -m venv venv
